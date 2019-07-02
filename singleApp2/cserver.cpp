@@ -1,4 +1,4 @@
-﻿#include "cserver.h"
+#include "cserver.h"
 
 CServer::CServer(QObject *parent) : QObject(parent), m_server(nullptr)
 {
