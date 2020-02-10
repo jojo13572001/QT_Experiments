@@ -29,3 +29,7 @@ SOURCES += main.cpp\
 HEADERS  += myglwidget.h
 
 FORMS    += myglwidget.ui
+
+LIBS += -lopengl32
+
+LIBS += -lGlU32

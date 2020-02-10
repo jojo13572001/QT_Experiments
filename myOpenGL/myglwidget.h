@@ -1,7 +1,7 @@
 #ifndef MYGLWIDGET_H
 #define MYGLWIDGET_H
 
-//#include <QWidget>
+#include <QWidget>
 #include <qgl.h>
 #include <GL/glu.h>
 
