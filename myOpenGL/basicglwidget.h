@@ -1,15 +1,15 @@
-#ifndef MYGLWIDGET_H
-#define MYGLWIDGET_H
+#ifndef BASICGLWIDGET_H
+#define BASICGLWIDGET_H
 
 #include <QWidget>
 #include <qgl.h>
 #include <GL/glu.h>
 
-class MyGLWidget : public QGLWidget
+class BasicGLWidget : public QGLWidget
 {
     Q_OBJECT
 public:
-    explicit MyGLWidget(QWidget *parent = 0);
+    explicit BasicGLWidget(QWidget *parent = 0);
 protected:
     void initializeGL();
     void resizeGL(int w, int h);

@@ -1,11 +1,11 @@
-#include "myglwidget.h"
+#include "basicglwidget.h"
 
-MyGLWidget::MyGLWidget(QWidget *parent) : QGLWidget(parent)
+BasicGLWidget::BasicGLWidget(QWidget *parent) : QGLWidget(parent)
 {
     
 }
 
-void MyGLWidget::initializeGL()
+void BasicGLWidget::initializeGL()
 {
    glClearColor(0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_SMOOTH);
@@ -13,7 +13,7 @@ void MyGLWidget::initializeGL()
    glEnable(GL_DEPTH_TEST);
 }
 
-void MyGLWidget::resizeGL(int w, int h)
+void BasicGLWidget::resizeGL(int w, int h)
 {
    glViewport(0, 0, (GLint)w, (GLint)h);
    glMatrixMode(GL_PROJECTION);
@@ -23,20 +23,24 @@ void MyGLWidget::resizeGL(int w, int h)
    glLoadIdentity();
 }
 
-void MyGLWidget::paintGL()
+void BasicGLWidget::paintGL()
 {
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glLoadIdentity();
-   // ?制三角形
+
    glTranslatef(-2.0, 0.0, -6.0);
-   glBegin(GL_TRIANGLES);  
+   glBegin(GL_TRIANGLES);
+   glColor3f(1.0, 0.0, 0.0);
    glVertex3f(0.0, 1.0, 0.0);
+   glColor3f(0.0, 1.0, 0.0);
    glVertex3f(-1.0, -1.0, 0.0);
+   glColor3f(0.0, 0.0, 1.0);
    glVertex3f(1.0, -1.0, 0.0);
    glEnd();
-   // ?制四?形
+
    glTranslatef(4.0, 0.0, 0.0);
-   glBegin(GL_QUADS);   
+   glBegin(GL_QUADS);
+   glColor3f(1.0, 1.0, 0.0);
    glVertex3f(-1.0, 1.0, 0.0);
    glVertex3f(1.0, 1.0, 0.0);
    glVertex3f(1.0, -1.0, 0.0);

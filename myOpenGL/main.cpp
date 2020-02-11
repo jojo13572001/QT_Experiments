@@ -1,10 +1,10 @@
 #include <QApplication>
-#include "myglwidget.h"
+#include "basicglwidget.h"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MyGLWidget w;
+    BasicGLWidget w;
     w.resize(400, 300);
     w.show();
     
