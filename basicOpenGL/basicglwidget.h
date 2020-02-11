@@ -4,7 +4,12 @@
 #include <QWidget>
 #include <qgl.h>
 #include <GL/glu.h>
-
+/*
+ * The most important point is that
+ * QGLWidget only exists for compatibility reasons to older codebases.
+ * As suggested in the Qt documentation on QGLWidget,
+ * starting from Qt 5.4 you should use QOpenGLWidget instead.
+ */
 class BasicGLWidget : public QGLWidget
 {
     Q_OBJECT

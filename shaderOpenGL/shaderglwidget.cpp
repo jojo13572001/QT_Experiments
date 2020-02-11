@@ -1,12 +1,14 @@
 #include "shaderglwidget.h"
 
-shaderGLWidget::shaderGLWidget(QWidget *parent) : QGLWidget(parent)
+shaderGLWidget::shaderGLWidget(QOpenGLWidget *parent) : QOpenGLWidget(parent)
 {
     
 }
 
 void shaderGLWidget::initializeGL()
 {
+   createGPUProgram("trianglevertexshader.vert", "trianglefragmentshader.frag");
+
    glClearColor(0.0, 0.0, 0.0, 0.0);
    glShadeModel(GL_SMOOTH);
    glClearDepth(1.0);
@@ -46,4 +48,30 @@ void shaderGLWidget::paintGL()
    glVertex3f(1.0, -1.0, 0.0);
    glVertex3f(-1.0, -1.0, 0.0);
    glEnd();
+}
+
+GLuint shaderGLWidget::createGPUProgram(const QString& vertexShaderFile, const QString& fragmentShaderFile)
+{
+    mVertexShader = make_unique<QOpenGLShader>(QOpenGLShader::Vertex);
+
+    if (!mVertexShader->compileSourceFile(vertexShaderFile))
+    {
+        mVertexShader.reset();
+        return 0;
+    }
+
+    mFragmentShader = make_unique<QOpenGLShader>(QOpenGLShader::Fragment);
+    if (!mFragmentShader->compileSourceFile(fragmentShaderFile))
+    {
+        mVertexShader.reset();
+        mFragmentShader.reset();
+        return 0;
+    }
+
+    mShaderProgram = make_unique<QOpenGLShaderProgram>(this);
+    mShaderProgram->addShader(mVertexShader.get());
+    mShaderProgram->addShader(mFragmentShader.get());
+    mShaderProgram->link();
+
+    return mShaderProgram->programId();
 }

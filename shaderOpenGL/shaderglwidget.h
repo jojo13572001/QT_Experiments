@@ -1,15 +1,29 @@
-#ifndef BASICGLWIDGET_H
-#define BASICGLWIDGET_H
+#ifndef SHADERGLWIDGET_H
+#define SHADERGLWIDGET_H
 
-#include <QWidget>
-#include <qgl.h>
+#include <memory>
+#include <QOpenGLWidget>
+#include <QOpenGLShader>
+#include <QOpenGLShaderProgram>
 #include <GL/glu.h>
 
-class shaderGLWidget : public QGLWidget
+using namespace std;
+class shaderGLWidget : public QOpenGLWidget
 {
     Q_OBJECT
 public:
-    explicit shaderGLWidget(QWidget *parent = 0);
+    explicit shaderGLWidget(QOpenGLWidget *parent = nullptr);
+    ~shaderGLWidget() = default;
+
+private:
+    //create a GPU program
+    GLuint createGPUProgram(const QString& nVertexShaderFile, const QString& nFragmentShaderFile);
+
+private:
+    unique_ptr<QOpenGLShader> mVertexShader;
+    unique_ptr<QOpenGLShader> mFragmentShader;
+    unique_ptr<QOpenGLShaderProgram> mShaderProgram;
+
 protected:
     void initializeGL();
     void resizeGL(int w, int h);
