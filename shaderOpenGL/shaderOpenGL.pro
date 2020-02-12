@@ -33,9 +33,7 @@ HEADERS  += \
 FORMS    += \
     shaderglwidget.ui
 
-LIBS += -lopengl32
-
-LIBS += -lGlU32
+LIBS += -lopengl32 -lGlU32
 
 DISTFILES += \
     trianglefragmentshader.frag \

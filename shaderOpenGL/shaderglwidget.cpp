@@ -2,29 +2,28 @@
 
 shaderGLWidget::shaderGLWidget(QOpenGLWidget *parent) : QOpenGLWidget(parent)
 {
-    
+    mTimer = make_unique<QTimer>();
 }
 
 void shaderGLWidget::initializeGL()
 {
-   GLuint programId = createGPUProgram("trianglevertexshader.vert", "trianglefragmentshader.frag");
-   mOpenGLCore.reset(QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_2_Core>());
+   mProgramId = createGPUProgram("trianglevertexshader.vert", "trianglefragmentshader.frag");
+   if (mProgramId <= 0) {
+       return;
+   }
 
-   //Get Uniform ID & Attribute ID
-   mMLocationMat = mOpenGLCore->glGetUniformLocation(programId, "M");
-   mVLocationMat = mOpenGLCore->glGetUniformLocation(programId, "V");
-   mPLocationMat = mOpenGLCore->glGetUniformLocation(programId, "P");
-   mPosVector = mOpenGLCore->glGetAttribLocation(programId, "pos");
-   mColorVector = mOpenGLCore->glGetAttribLocation(programId, "color");
+   //mOpenGLCore is a reference from currentContext, it will be recycled automatically by context.
+   //Don't delete it manually
+   mOpenGLCore = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_3_Core>();
 
-   VertexInfo vertexInfo[3]= {{{0.0, 1.0, 0.0}, {1.0, 0.0, 0.0, 1.0}},
-                              {{-1.0, -1.0, 0.0}, {0.0, 1.0, 0.0, 1.0}},
-                              {{1.0, -1.0, 0.0}, {0.0, 0.0, 1.0, 1.0}}};
+   VertexInfo triangleVertexInfo[3]= {{{0.0, 1.0, 0.0}, {1.0, 0.0, 0.0, 1.0}},
+                                      {{-1.0, -1.0, 0.0}, {0.0, 1.0, 0.0, 1.0}},
+                                      {{1.0, -1.0, 0.0}, {0.0, 0.0, 1.0, 1.0}}};
 
    //Create VBO
    mOpenGLCore->glGenBuffers(1, &mVBO);
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-   mOpenGLCore->glBufferData(GL_ARRAY_BUFFER, sizeof(VertexInfo) * 3, vertexInfo, GL_STATIC_DRAW);
+   mOpenGLCore->glBufferData(GL_ARRAY_BUFFER, sizeof(VertexInfo) * 3, triangleVertexInfo, GL_STATIC_DRAW);
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
    //create IBO
    unsigned int index[3] = {0, 1, 2};
@@ -33,28 +32,29 @@ void shaderGLWidget::initializeGL()
    mOpenGLCore->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index), index, GL_STATIC_DRAW);
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-   glClearColor(0.0, 0.0, 0.0, 0.0);
-   glShadeModel(GL_SMOOTH);
-   glClearDepth(1.0);
-   glEnable(GL_DEPTH_TEST);
+   mOpenGLCore->glClearColor(0.0, 0.0, 0.0, 0.0);
+   //glShadeModel(GL_SMOOTH);
+   //glClearDepth(1.0);
+   //glEnable(GL_DEPTH_TEST);
+   QObject::connect(mTimer.get(), SIGNAL(timeout()), this, SLOT(onTimerOut()));
+   mTimer->start(500);
 }
 
 void shaderGLWidget::resizeGL(int w, int h)
 {
-   glViewport(0, 0, (GLint)w, (GLint)h);
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   gluPerspective(45.0, (GLfloat)w/(GLfloat)h, 0.1, 100.0);
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
+   mOpenGLCore->glViewport(0, 0, (GLint)w, (GLint)h);
+
+   //perspertive matrix should be reset everytime
+   mPnormalMat.setToIdentity();
+   mPnormalMat.perspective(45.0f, (GLfloat)w/(GLfloat)h, 0.1f, 100.0f);
 }
 
 void shaderGLWidget::paintGL()
 {
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-   glLoadIdentity();
+   if (mProgramId<=0 || !mShaderProgram->bind())
+       return;
 
-   glTranslatef(-2.0, 0.0, -6.0);
+   mOpenGLCore->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    /*
    glBegin(GL_TRIANGLES);
    glColor3f(1.0, 0.0, 0.0);
@@ -76,13 +76,21 @@ void shaderGLWidget::paintGL()
    glEnd();
    */
 
-   if (!mShaderProgram->bind())
-       return;
-   QMatrix4x4 nMnormalMat, nVnormalMat, projectionMatrix;
+   //Get Uniform ID & Attribute ID
+   mMLocationMat = mOpenGLCore->glGetUniformLocation(mProgramId, "M");
+   mVLocationMat = mOpenGLCore->glGetUniformLocation(mProgramId, "V");
+   mPLocationMat = mOpenGLCore->glGetUniformLocation(mProgramId, "P");
+   mPosVector = mOpenGLCore->glGetAttribLocation(mProgramId, "pos");
+   mColorVector = mOpenGLCore->glGetAttribLocation(mProgramId, "color");
+
+   QMatrix4x4 nMnormalMat, nVnormalMat;
+   //Model Matrix, rotate and then translate
+   nMnormalMat.translate(-2.0, 0.0, -6.0);
+   nMnormalMat.rotate(mRotateAngle, 0, 0, 1);
 
    mOpenGLCore->glUniformMatrix4fv(mMLocationMat, 1, GL_FALSE, nMnormalMat.data());
    mOpenGLCore->glUniformMatrix4fv(mVLocationMat, 1, GL_FALSE, nVnormalMat.data());
-   mOpenGLCore->glUniformMatrix4fv(mPLocationMat, 1, GL_FALSE, projectionMatrix.data());
+   mOpenGLCore->glUniformMatrix4fv(mPLocationMat, 1, GL_FALSE, mPnormalMat.data());
 
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 
@@ -100,6 +108,12 @@ void shaderGLWidget::paintGL()
    mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
    mShaderProgram->release();
+}
+
+void shaderGLWidget::onTimerOut(void)
+{
+    mRotateAngle = (mRotateAngle+90) % 360;
+    repaint();
 }
 
 GLuint shaderGLWidget::createGPUProgram(const QString& vertexShaderFile, const QString& fragmentShaderFile)

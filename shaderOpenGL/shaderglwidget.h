@@ -3,11 +3,16 @@
 
 #include <memory>
 #include <QOpenGLWidget>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLShader>
 #include <QOpenGLShaderProgram>
-//#include <QOpenGLFunctions>
-#include <QOpenGLFunctions_3_2_Core>
+#include <QOpenGLShaderProgram>
+#include <QMatrix>
+#include <QTimer>
 #include <GL/glu.h>
+#include <GL/gl.h>
 
 using namespace std;
 
@@ -33,7 +38,7 @@ private:
     unique_ptr<QOpenGLShader> mFragmentShader{nullptr};
     unique_ptr<QOpenGLShaderProgram> mShaderProgram{nullptr};
 
-    unique_ptr<QOpenGLFunctions_3_2_Core> mOpenGLCore{nullptr};
+    QOpenGLFunctions_4_3_Core* mOpenGLCore{nullptr};
 
     // MVP Location
     GLint mMLocationMat;
@@ -41,11 +46,17 @@ private:
     GLint mPLocationMat;
     GLint mPosVector;
     GLint mColorVector;
+    QMatrix4x4 mPnormalMat;
+    GLint mRotateAngle{0};
 
     // VBO
     GLuint mVBO;
     // IBO
     GLuint mIBO;
+
+    GLuint mProgramId{0};
+
+    unique_ptr<QTimer> mTimer{nullptr};
 
 protected:
     void initializeGL();
@@ -53,7 +64,8 @@ protected:
     void paintGL();
 signals:
     
-public slots:
+protected slots:
+    void onTimerOut(void);
 };
 
 #endif // MYGLWIDGET_H
