@@ -41,22 +41,22 @@ private:
     QOpenGLFunctions_4_3_Core* mOpenGLCore{nullptr};
 
     // MVP Location
-    GLint mMLocationMat;
-    GLint mVLocationMat;
-    GLint mPLocationMat;
-    GLint mPosVector;
-    GLint mColorVector;
-    QMatrix4x4 mPnormalMat;
+    GLint mModelId;
+    GLint mViewId;
+    GLint mProjectionId;
+    GLint mPositionId;
+    GLint mColorId;
+    QMatrix4x4 mProjectionNormalMatrix;
     GLint mRotateAngle{0};
 
     // VBO
-    GLuint mVBO;
+    GLuint mTriangleVBO, mQuadVBO;
     // IBO
-    GLuint mIBO;
+    GLuint mTriableIBO, mQuadIBO;
 
     GLuint mProgramId{0};
 
-    unique_ptr<QTimer> mTimer{nullptr};
+    unique_ptr<QTimer> mRenderTimer{nullptr};
 
 protected:
     void initializeGL();

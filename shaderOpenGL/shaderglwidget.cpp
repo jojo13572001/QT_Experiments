@@ -2,7 +2,7 @@
 
 shaderGLWidget::shaderGLWidget(QOpenGLWidget *parent) : QOpenGLWidget(parent)
 {
-    mTimer = make_unique<QTimer>();
+    mRenderTimer = make_unique<QTimer>();
 }
 
 void shaderGLWidget::initializeGL()
@@ -16,37 +16,57 @@ void shaderGLWidget::initializeGL()
    //Don't delete it manually
    mOpenGLCore = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_4_3_Core>();
 
+   //Triangle model
    VertexInfo triangleVertexInfo[3]= {{{0.0, 1.0, 0.0}, {1.0, 0.0, 0.0, 1.0}},
                                       {{-1.0, -1.0, 0.0}, {0.0, 1.0, 0.0, 1.0}},
                                       {{1.0, -1.0, 0.0}, {0.0, 0.0, 1.0, 1.0}}};
 
-   //Create VBO
-   mOpenGLCore->glGenBuffers(1, &mVBO);
-   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mVBO);
+   //Quad model
+   VertexInfo quadVertexInfo[4]= {{{-1.0, 1.0, 0.0}, {1.0, 0.0, 0.0, 1.0}},
+                                  {{1.0, 1.0, 0.0}, {1.0, 0.0, 0.0, 1.0}},
+                                  {{1.0, -1.0, 0.0}, {0.0, 0.0, 1.0, 1.0}},
+                                  {{-1.0, -1.0, 0.0}, {0.0, 0.0, 1.0, 1.0}}};
+
+   //Create Triangle VBO
+   mOpenGLCore->glGenBuffers(1, &mTriangleVBO);
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mTriangleVBO);
    mOpenGLCore->glBufferData(GL_ARRAY_BUFFER, sizeof(VertexInfo) * 3, triangleVertexInfo, GL_STATIC_DRAW);
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
-   //create IBO
-   unsigned int index[3] = {0, 1, 2};
-   mOpenGLCore->glGenBuffers(1, &mIBO);
-   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIBO);
-   mOpenGLCore->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(index), index, GL_STATIC_DRAW);
+   //create Triangle IBO
+   unsigned int triangleIndex[3] = {0, 1, 2};
+   mOpenGLCore->glGenBuffers(1, &mTriableIBO);
+   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mTriableIBO);
+   mOpenGLCore->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndex), triangleIndex, GL_STATIC_DRAW);
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-   mOpenGLCore->glClearColor(0.0, 0.0, 0.0, 0.0);
+
+   //Create Quad VBO
+   mOpenGLCore->glGenBuffers(1, &mQuadVBO);
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mQuadVBO);
+   mOpenGLCore->glBufferData(GL_ARRAY_BUFFER, sizeof(VertexInfo) * 4, quadVertexInfo, GL_STATIC_DRAW);
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
+   //create Quad IBO
+   unsigned int quadIndex[4] = {0, 1, 2, 3};
+   mOpenGLCore->glGenBuffers(1, &mQuadIBO);
+   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadIBO);
+   mOpenGLCore->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndex), quadIndex, GL_STATIC_DRAW);
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
+
    //glShadeModel(GL_SMOOTH);
-   //glClearDepth(1.0);
-   //glEnable(GL_DEPTH_TEST);
-   QObject::connect(mTimer.get(), SIGNAL(timeout()), this, SLOT(onTimerOut()));
-   mTimer->start(500);
+   mOpenGLCore->glClearColor(0.0, 0.0, 0.0, 0.0);
+   mOpenGLCore->glClearDepth(1.0);
+   mOpenGLCore->glEnable(GL_DEPTH_TEST);
+   QObject::connect(mRenderTimer.get(), SIGNAL(timeout()), this, SLOT(onTimerOut()));
+   mRenderTimer->start(33);
 }
 
 void shaderGLWidget::resizeGL(int w, int h)
 {
    mOpenGLCore->glViewport(0, 0, (GLint)w, (GLint)h);
 
-   //perspertive matrix should be reset everytime
-   mPnormalMat.setToIdentity();
-   mPnormalMat.perspective(45.0f, (GLfloat)w/(GLfloat)h, 0.1f, 100.0f);
+   //perspertive matrix should be reset everytime here because resize will be called many times
+   mProjectionNormalMatrix.setToIdentity();
+   mProjectionNormalMatrix.perspective(45.0f, (GLfloat)w/(GLfloat)h, 0.1f, 100.0f);
 }
 
 void shaderGLWidget::paintGL()
@@ -55,56 +75,58 @@ void shaderGLWidget::paintGL()
        return;
 
    mOpenGLCore->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-   /*
-   glBegin(GL_TRIANGLES);
-   glColor3f(1.0, 0.0, 0.0);
-   glVertex3f(0.0, 1.0, 0.0);
-   glColor3f(0.0, 1.0, 0.0);
-   glVertex3f(-1.0, -1.0, 0.0);
-   glColor3f(0.0, 0.0, 1.0);
-   glVertex3f(1.0, -1.0, 0.0);
-   glEnd();
-   */
-    /*
-   glTranslatef(4.0, 0.0, 0.0);
-   glBegin(GL_QUADS);
-   glColor3f(1.0, 1.0, 0.0);
-   glVertex3f(-1.0, 1.0, 0.0);
-   glVertex3f(1.0, 1.0, 0.0);
-   glVertex3f(1.0, -1.0, 0.0);
-   glVertex3f(-1.0, -1.0, 0.0);
-   glEnd();
-   */
 
    //Get Uniform ID & Attribute ID
-   mMLocationMat = mOpenGLCore->glGetUniformLocation(mProgramId, "M");
-   mVLocationMat = mOpenGLCore->glGetUniformLocation(mProgramId, "V");
-   mPLocationMat = mOpenGLCore->glGetUniformLocation(mProgramId, "P");
-   mPosVector = mOpenGLCore->glGetAttribLocation(mProgramId, "pos");
-   mColorVector = mOpenGLCore->glGetAttribLocation(mProgramId, "color");
+   mModelId = mOpenGLCore->glGetUniformLocation(mProgramId, "M");
+   mViewId = mOpenGLCore->glGetUniformLocation(mProgramId, "V");
+   mProjectionId = mOpenGLCore->glGetUniformLocation(mProgramId, "P");
+   mPositionId = mOpenGLCore->glGetAttribLocation(mProgramId, "pos");
+   mColorId = mOpenGLCore->glGetAttribLocation(mProgramId, "color");
 
-   QMatrix4x4 nMnormalMat, nVnormalMat;
+   //--------------------------------Triangle Rendering-----------------------------------
+   QMatrix4x4 modelNormalMatrix, viewNormalMatrix;
    //Model Matrix, rotate and then translate
-   nMnormalMat.translate(-2.0, 0.0, -6.0);
-   nMnormalMat.rotate(mRotateAngle, 0, 0, 1);
+   modelNormalMatrix.translate(-2.0, 0.0, -6.0);
+   modelNormalMatrix.rotate(mRotateAngle, 0, 1, 0);
 
-   mOpenGLCore->glUniformMatrix4fv(mMLocationMat, 1, GL_FALSE, nMnormalMat.data());
-   mOpenGLCore->glUniformMatrix4fv(mVLocationMat, 1, GL_FALSE, nVnormalMat.data());
-   mOpenGLCore->glUniformMatrix4fv(mPLocationMat, 1, GL_FALSE, mPnormalMat.data());
+   mOpenGLCore->glUniformMatrix4fv(mModelId, 1, GL_FALSE, modelNormalMatrix.data());
+   mOpenGLCore->glUniformMatrix4fv(mViewId, 1, GL_FALSE, viewNormalMatrix.data());
+   mOpenGLCore->glUniformMatrix4fv(mProjectionId, 1, GL_FALSE, mProjectionNormalMatrix.data());
 
-   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-
-   // DrawArrays paint
-   mOpenGLCore->glEnableVertexAttribArray(mPosVector);
-   mOpenGLCore->glVertexAttribPointer(mPosVector, 3, GL_FLOAT, GL_FALSE, sizeof(VertexInfo), (void*)0);
-   mOpenGLCore->glEnableVertexAttribArray(mColorVector);
-   mOpenGLCore->glVertexAttribPointer(mColorVector, 4, GL_FLOAT, GL_FALSE, sizeof(VertexInfo), (void*)(sizeof(float) * 3));
-   //OpenGLCore->glDrawArrays(GL_TRIANGLES, 0, 3);
+   // DrawArrays paint Triangle
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mTriangleVBO);
+   mOpenGLCore->glEnableVertexAttribArray(mPositionId);
+   mOpenGLCore->glVertexAttribPointer(mPositionId, 3, GL_FLOAT, GL_FALSE, sizeof(VertexInfo), (void*)0);
+   mOpenGLCore->glEnableVertexAttribArray(mColorId);
+   mOpenGLCore->glVertexAttribPointer(mColorId, 4, GL_FLOAT, GL_FALSE, sizeof(VertexInfo), (void*)(sizeof(float) * 3));
+   //mOpenGLCore->glDrawArrays(GL_TRIANGLES, 0, 3);
    mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-   // DrawElement paint
-   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIBO);
+   //DrawElement paint Triangle
+   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mTriableIBO);
    mOpenGLCore->glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+   //--------------------------------Quad Rendering-----------------------------------
+
+   //Set Quad posion
+   modelNormalMatrix.setToIdentity();
+   modelNormalMatrix.translate(2.0, 0.0, -6.0);
+   modelNormalMatrix.rotate(mRotateAngle, 1, 0, 0);
+   mOpenGLCore->glUniformMatrix4fv(mModelId, 1, GL_FALSE, modelNormalMatrix.data());
+
+   //DrawArrays paint Quad
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, mQuadVBO);
+   mOpenGLCore->glEnableVertexAttribArray(mPositionId);
+   mOpenGLCore->glVertexAttribPointer(mPositionId, 3, GL_FLOAT, GL_FALSE, sizeof(VertexInfo), (void*)0);
+   mOpenGLCore->glEnableVertexAttribArray(mColorId);
+   mOpenGLCore->glVertexAttribPointer(mColorId, 4, GL_FLOAT, GL_FALSE, sizeof(VertexInfo), (void*)(sizeof(float) * 3));
+   mOpenGLCore->glDrawArrays(GL_QUADS, 0, 4);
+   mOpenGLCore->glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+   //DrawElement paint Quad
+   mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mQuadIBO);
+   mOpenGLCore->glDrawElements(GL_QUADS, 4, GL_UNSIGNED_INT, 0);
    mOpenGLCore->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
    mShaderProgram->release();
@@ -112,7 +134,7 @@ void shaderGLWidget::paintGL()
 
 void shaderGLWidget::onTimerOut(void)
 {
-    mRotateAngle = (mRotateAngle+90) % 360;
+    mRotateAngle = (mRotateAngle+4)%360;
     repaint();
 }
 
