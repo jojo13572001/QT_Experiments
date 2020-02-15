@@ -1,13 +1,5 @@
-/shaderOpenGL/.qmake.stash
-/shaderOpenGL/debug/main.obj
-/shaderOpenGL/debug/moc_predefs.h
-/shaderOpenGL/debug/moc_shaderglwidget.cpp
-/shaderOpenGL/debug/moc_shaderglwidget.obj
-/shaderOpenGL/debug/shaderglwidget.obj
-/shaderOpenGL/debug/shaderOpenGL.exe
-/shaderOpenGL/debug/shaderOpenGL.ilk
-/shaderOpenGL/debug/shaderOpenGL.pdb
-/shaderOpenGL/debug/shaderOpenGL.vc.pdb
+/*/.qmake.stash
+/*/debug
 /shaderOpenGL/Makefile
 /shaderOpenGL/Makefile.Debug
 /shaderOpenGL/Makefile.Release
