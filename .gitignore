@@ -1,6 +1,6 @@
 /*/.qmake.stash
 /*/debug
-/shaderOpenGL/Makefile
-/shaderOpenGL/Makefile.Debug
-/shaderOpenGL/Makefile.Release
-/shaderOpenGL/shaderOpenGL.pro.user
+/*/Makefile
+/*/Makefile.Debug
+/*/Makefile.Release
+/*/shaderOpenGL.pro.user

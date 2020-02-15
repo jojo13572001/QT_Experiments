@@ -2,27 +2,15 @@
 #define SHADERGLWIDGET_H
 
 #include <memory>
-#include <QOpenGLWidget>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_3_Core>
-#include <QOpenGLShader>
 #include <stdio.h>
+
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions_4_3_Core>
 #include <QOpenGLShaderProgram>
-#include <QOpenGLShaderProgram>
-#include <QMatrix>
 #include <QMessageBox>
 #include <QTimer>
-#include <GL/glu.h>
-#include <GL/gl.h>
 
 using namespace std;
-
-struct VertexInfo
-{
-    float pos[4];
-    float texture[4];
-};
 
 class shaderGLWidget : public QOpenGLWidget
 {
