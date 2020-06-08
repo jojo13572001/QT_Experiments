@@ -1,2 +1,2 @@
-# QT_Tutorials
-Practice for QT
+# QT_Experiments
+Experiments for QT
